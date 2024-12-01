@@ -1,0 +1,182 @@
+[
+  {
+    "sourceChainId": 1,
+    "sourceTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "destinationChainId": 1,
+    "destinationTokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "inputAmount": "20000000",
+    "outputAmount": "5377831974573082",
+    "totalFeeEstimation": {
+      "gasFee": "1903688808400000",
+      "liquidityProviderFee": "0",
+      "totalFee": "1903688808400000",
+      "feePercentage": "951844404200"
+    },
+    "poolFee": 3000
+  },
+  {
+    "sourceChainId": 1,
+    "sourceTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "destinationChainId": 1,
+    "destinationTokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "inputAmount": "500000000",
+    "outputAmount": "134445653646095302",
+    "totalFeeEstimation": {
+      "gasFee": "1903688808400000",
+      "liquidityProviderFee": "0",
+      "totalFee": "1903688808400000",
+      "feePercentage": "38073776168"
+    },
+    "poolFee": 3000
+  },
+  {
+    "sourceChainId": 1,
+    "sourceTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "destinationChainId": 1,
+    "destinationTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    "inputAmount": "20000000",
+    "outputAmount": "19912358",
+    "totalFeeEstimation": {
+      "gasFee": "1903688808400000",
+      "liquidityProviderFee": "0",
+      "totalFee": "1903688808400000",
+      "feePercentage": "951844404200"
+    },
+    "poolFee": 3000
+  },
+  {
+    "sourceChainId": 1,
+    "sourceTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "destinationChainId": 1,
+    "destinationTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    "inputAmount": "500000000",
+    "outputAmount": "497685164",
+    "totalFeeEstimation": {
+      "gasFee": "1903688808400000",
+      "liquidityProviderFee": "0",
+      "totalFee": "1903688808400000",
+      "feePercentage": "38073776168"
+    },
+    "poolFee": 3000
+  },
+  {
+    "sourceChainId": 1,
+    "sourceTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    "destinationChainId": 1,
+    "destinationTokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "inputAmount": "20000000",
+    "outputAmount": "0",
+    "totalFeeEstimation": {
+      "gasFee": "1903688808400000",
+      "liquidityProviderFee": "0",
+      "totalFee": "1903688808400000",
+      "feePercentage": "951844404200"
+    },
+    "poolFee": 3000
+  },
+  {
+    "sourceChainId": 1,
+    "sourceTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    "destinationChainId": 1,
+    "destinationTokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "inputAmount": "500000000",
+    "outputAmount": "1",
+    "totalFeeEstimation": {
+      "gasFee": "1903688808400000",
+      "liquidityProviderFee": "0",
+      "totalFee": "1903688808400000",
+      "feePercentage": "38073776168"
+    },
+    "poolFee": 3000
+  },
+  {
+    "sourceChainId": 1,
+    "sourceTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    "destinationChainId": 1,
+    "destinationTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "inputAmount": "20000000",
+    "outputAmount": "19912358",
+    "totalFeeEstimation": {
+      "gasFee": "1903688808400000",
+      "liquidityProviderFee": "0",
+      "totalFee": "1903688808400000",
+      "feePercentage": "951844404200"
+    },
+    "poolFee": 3000
+  },
+  {
+    "sourceChainId": 1,
+    "sourceTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    "destinationChainId": 1,
+    "destinationTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "inputAmount": "500000000",
+    "outputAmount": "497685164",
+    "totalFeeEstimation": {
+      "gasFee": "1903688808400000",
+      "liquidityProviderFee": "0",
+      "totalFee": "1903688808400000",
+      "feePercentage": "38073776168"
+    },
+    "poolFee": 3000
+  },
+  {
+    "sourceChainId": 1,
+    "sourceTokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "destinationChainId": 1,
+    "destinationTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "inputAmount": "20000000000000000000",
+    "outputAmount": "4633240488057493346102",
+    "totalFeeEstimation": {
+      "gasFee": "1903688808400000",
+      "liquidityProviderFee": "0",
+      "totalFee": "1903688808400000",
+      "feePercentage": "0"
+    },
+    "poolFee": 3000
+  },
+  {
+    "sourceChainId": 1,
+    "sourceTokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "destinationChainId": 1,
+    "destinationTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    "inputAmount": "500000000000000000000",
+    "outputAmount": "4633240488201731509237",
+    "totalFeeEstimation": {
+      "gasFee": "1903688808400000",
+      "liquidityProviderFee": "0",
+      "totalFee": "1903688808400000",
+      "feePercentage": "0"
+    },
+    "poolFee": 3000
+  },
+  {
+    "sourceChainId": 1,
+    "sourceTokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "destinationChainId": 1,
+    "destinationTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    "inputAmount": "20000000000000000000",
+    "outputAmount": "73889278649",
+    "totalFeeEstimation": {
+      "gasFee": "1903688808400000",
+      "liquidityProviderFee": "0",
+      "totalFee": "1903688808400000",
+      "feePercentage": "0"
+    },
+    "poolFee": 3000
+  },
+  {
+    "sourceChainId": 1,
+    "sourceTokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "destinationChainId": 1,
+    "destinationTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    "inputAmount": "500000000000000000000",
+    "outputAmount": "1844404105462",
+    "totalFeeEstimation": {
+      "gasFee": "1903688808400000",
+      "liquidityProviderFee": "0",
+      "totalFee": "1903688808400000",
+      "feePercentage": "0"
+    },
+    "poolFee": 3000
+  }
+]
