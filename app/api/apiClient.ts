@@ -30,11 +30,6 @@ interface AuthResponse {
   };
 }
 
-interface EmailVerifyResponse {
-  token: string;
-  message: string;
-}
-
 interface Wallet {
   network_name: string;
   address: string;
@@ -52,7 +47,7 @@ class ApiClient {
   private apiKey: string;
 
   constructor(apiKey: string) {
-    this.apiKey = apiKey;
+    this.apiKey = process.env.NEXT_PUBLIC_OKTO_API_KEY??'';
   }
 
   private getHeaders(authToken?: string) {
@@ -91,6 +86,7 @@ class ApiClient {
       );
       return response.data;
     } catch (error) {
+      console.log(error);
       throw new Error('Failed to verify OTP');
     }
   }
@@ -107,6 +103,7 @@ class ApiClient {
       );
       return response.data;
     } catch (error) {
+      console.log(error);
       throw new Error('Failed to initiate phone authentication');
     }
   }
@@ -125,6 +122,7 @@ class ApiClient {
       );
       return response.data;
     } catch (error) {
+      console.log(error);
       throw new Error('Failed to verify phone OTP');
     }
   }
@@ -181,6 +179,7 @@ class ApiClient {
         }
       );
     } catch (error) {
+      console.log(error);
       throw new Error('Failed to logout');
     }
   }

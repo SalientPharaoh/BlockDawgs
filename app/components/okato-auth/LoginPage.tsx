@@ -6,7 +6,7 @@ import { LoginButton } from './LoginButton';
 import ApiClient from '../../api/apiClient';
 import { useAuth } from './AppContext';
 
-const API_KEY = process.env.OKTO_API_KEY || '';
+const API_KEY = process.env.NEXT_PUBLIC_OKTO_API_KEY || '';
 const apiClient = new ApiClient(API_KEY);
 
 export const LoginPage: React.FC = () => {

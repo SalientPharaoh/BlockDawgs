@@ -4,10 +4,23 @@ import { useState, useRef, useEffect } from 'react';
 import { Message, StreamMessage, Chat, QuickAction } from '../types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { LogoutButton } from '../components/okato-auth/LogoutButton';
+import ApiClient from '../api/apiClient';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../components/okato-auth/AppContext';
+import axios from 'axios';
 
 type ChatMap = {
   [key: string]: Chat;
 };
+
+interface NetworkData {
+  network_name: string;
+  address: string;
+  success: boolean;
+}
+
 
 export default function ChatPage() {
   const [chats, setChats] = useState<ChatMap>({});
@@ -17,6 +30,7 @@ export default function ChatPage() {
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [chatMode, setChatMode] = useState<'chat' | 'command'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
 
   // Quick action templates
   const quickActions: QuickAction[] = [
@@ -74,17 +88,6 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const createNewChat = () => {
-    const newChat: Chat = {
-      id: Date.now(),
-      threadId: Math.random().toString(36).substring(7),
-      title: 'New Chat',
-      messages: []
-    };
-    setChats(prev => ({ ...prev, [newChat.id]: newChat })); 
-    setCurrentChat(newChat);
-  };
-
   const handleNewChat = () => {
     // Find existing empty chat
     const existingEmptyChat = Object.values(chats).find(chat => chat.messages.length === 0);
@@ -136,6 +139,9 @@ export default function ChatPage() {
 
     try {
       // Send request to backend
+      const walletAddress = localStorage.getItem('wallets') || '';
+      const walletArray: NetworkData[] = JSON.parse(walletAddress);
+
       const response = await fetch('https://blockdawgs-backend-242842293866.asia-south1.run.app/api/chat', {
         method: 'POST',
         headers: {
@@ -145,9 +151,10 @@ export default function ChatPage() {
         body: JSON.stringify({
           messages: updatedChat.messages.map(msg => ({
             content: msg.content,
-            role: msg.role
+            role: msg.role,
           })),
-          thread_id: updatedChat.id.toString()
+          thread_id: updatedChat.id.toString(),
+          wallet: walletArray
         }),
       });
 
@@ -166,12 +173,73 @@ export default function ChatPage() {
         : responseText;
       const data = JSON.parse(jsonStr);
 
+      if(data.isExecute){
+        // Executing the router and native blocks
+        
+        const executePath = data.executePath.data.routes;
+        for(var i = 0; i < executePath.length; i++){
+          console.log(executePath[i]);
+          const protocol = executePath[i].protocol;
+          if(protocol.toLowerCase() === 'router'){
+            // Execute router transaction
+            const walletAddress = localStorage.getItem('wallets') || '';
+            const walletArray: NetworkData[] = JSON.parse(walletAddress);
+
+            const response = await fetch(`${process.env.TRANSACTION_BACKEND}/api/transactions/build/router`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                fromToken: executePath[i].fromToken,
+                toToken: executePath[i].toToken,
+                fromChainName: executePath[i].fromChainName,
+                toChainName: executePath[i].toChainName,
+                inputAmount: executePath[i].inputAmount
+              })
+            });
+
+            const result = await response.json();
+            console.log('Router transaction result:', result);
+          }else if(protocol.toLowerCase() === 'native'){
+            // Execute native transaction
+          }else if(protocol.toLowerCase() === 'uniswap'){
+            // Execute uniswap transaction
+          }else if(protocol.toLowerCase() === 'lifi'){
+            // Execute lifi transaction
+          }else{
+            continue
+          }
+        }
+
+        //After execution
+        const apiResult = 'Transactions completed successfully';
+        const aiResponse: StreamMessage = {
+          content: apiResult,
+          role: 'assistant',
+          timestamp: new Date().toISOString(),
+          isStreaming: false
+        };
+      
+        
+        const chatWithResponse = {
+          ...updatedChat,
+          messages: [...updatedChat.messages, aiResponse]
+        };
+  
+        setChats(prev => ({ ...prev, [chatWithResponse.id]: chatWithResponse }));
+        setCurrentChat(chatWithResponse);
+        
+      }
+      else{
+      // Streaming response
       const aiResponse: StreamMessage = {
         content: data.content,
         role: 'assistant',
         timestamp: new Date().toISOString(),
         isStreaming: false
       };
+    
       
       const chatWithResponse = {
         ...updatedChat,
@@ -180,6 +248,7 @@ export default function ChatPage() {
 
       setChats(prev => ({ ...prev, [chatWithResponse.id]: chatWithResponse }));
       setCurrentChat(chatWithResponse);
+    }
     } catch (error) {
       console.error('Error:', error);
       // Handle error by adding an error message to the chat
@@ -248,6 +317,7 @@ export default function ChatPage() {
         : [newUserMessage];
 
       // Send request to backend
+      const walletAddress = localStorage.getItem('walletAddress') || '';
       const response = await fetch('https://blockdawgs-backend-242842293866.asia-south1.run.app/api/chat', {
         method: 'POST',
         headers: {
@@ -260,6 +330,7 @@ export default function ChatPage() {
             role: msg.role
           })),
           thread_id: chatId.toString(), // Ensure thread_id is a string
+          wallet: walletAddress
         }),
       });
 
@@ -281,6 +352,7 @@ export default function ChatPage() {
         data = JSON.parse(jsonStr);
       } catch (e) {
         console.error('Failed to parse response:', responseText);
+        console.log(e);
         throw new Error('Invalid JSON response from server');
       }
 
@@ -451,10 +523,7 @@ export default function ChatPage() {
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-white/5">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-              <span className="text-sm font-medium">U</span>
-            </div>
-            <span className="text-sm text-white/70">User</span>
+            <LogoutButton />
           </div>
         </div>
       </aside>

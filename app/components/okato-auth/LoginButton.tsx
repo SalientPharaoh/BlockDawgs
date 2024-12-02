@@ -25,59 +25,80 @@ export function LoginButton() {
       console.log("Session status:", status);
       console.log("Session data:", session);
 
+      let currentTokens;
+      
       // Check if we already have valid tokens
       const existingTokens = localStorage.getItem('auth_tokens');
       if (existingTokens) {
         try {
           const tokens = JSON.parse(existingTokens);
           if (tokens.auth_token) {
-            console.log("Already have valid tokens, skipping authentication");
-            return;
+            console.log("Using existing auth tokens");
+            currentTokens = tokens;
           }
         } catch (e) {
           console.log("Invalid stored tokens, proceeding with authentication");
         }
       }
 
-      setLoading(true);
-      try {
-        console.log("Attempting Okto authentication with Google ID token");
-        const response = await apiClient.authenticateWithGoogle(session.id_token);
-        console.log("Okto authentication response:", response);
-        
-        if (!response?.data?.auth_token) {
-          throw new Error("Invalid authentication response");
-        }
-
-        const tokens = {
-          auth_token: response.data.auth_token,
-          refresh_auth_token: response.data.refresh_auth_token,
-          device_token: response.data.device_token,
-        };
-
-        // Store tokens and update context
-        setAuthTokens(tokens);
-        console.log("Tokens stored successfully");
-
-        // Fetch wallets
+      if (!currentTokens) {
+        setLoading(true);
         try {
-          console.log("Fetching wallets...");
-          const walletsResponse = await apiClient.getWallets(tokens.auth_token);
-          if (walletsResponse?.data?.wallets) {
-            updateWallets(walletsResponse.data.wallets);
-            console.log("Wallets updated successfully");
+          console.log("Attempting Okto authentication with Google ID token");
+          const response = await apiClient.authenticateWithGoogle(session.id_token);
+          console.log("Okto authentication response:", response);
+          
+          if (!response?.data?.auth_token) {
+            throw new Error("Invalid authentication response");
           }
-        } catch (walletError) {
-          console.error("Error fetching wallets:", walletError);
+
+          currentTokens = {
+            auth_token: response.data.auth_token,
+            refresh_auth_token: response.data.refresh_auth_token,
+            device_token: response.data.device_token,
+          };
+
+          // Store tokens and update context
+          setAuthTokens(currentTokens);
+          console.log("Tokens stored successfully");
+        } catch (error) {
+          console.error("Okto authentication error:", error);
+          setError(error instanceof Error ? error.message : 'Authentication failed');
+          // Clear any partial authentication state on error
+          localStorage.removeItem('auth_tokens');
+          document.cookie = 'auth_tokens=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          return;
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error("Okto authentication error:", error);
-        setError(error instanceof Error ? error.message : 'Authentication failed');
-        // Clear any partial authentication state on error
-        localStorage.removeItem('auth_tokens');
-        document.cookie = 'auth_tokens=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      } finally {
-        setLoading(false);
+      }
+
+      // Always check and create wallet regardless of token source
+      try {
+        console.log("Fetching wallets...");
+        const walletsResponse = await apiClient.getWallets(currentTokens.auth_token);
+        
+        if (!walletsResponse?.data?.wallets || walletsResponse.data.wallets.length === 0) {
+          console.log("No wallets found, creating new wallet...");
+          try {
+            const createWalletResponse = await apiClient.createWallet(currentTokens.auth_token);
+            if (createWalletResponse?.data?.wallets) {
+              console.log("Wallet created successfully:", createWalletResponse.data.wallets);
+              updateWallets(createWalletResponse.data.wallets);
+            } else {
+              throw new Error("Failed to create wallet");
+            }
+          } catch (createError) {
+            console.error("Error creating wallet:", createError);
+            throw createError;
+          }
+        } else {
+          console.log("Existing wallets found:", walletsResponse.data.wallets);
+          updateWallets(walletsResponse.data.wallets);
+        }
+        console.log("Wallets updated successfully");
+      } catch (walletError) {
+        console.error("Error fetching wallets:", walletError);
       }
     };
 
