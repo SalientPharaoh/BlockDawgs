@@ -8,9 +8,58 @@ import { buildUniswapTransaction } from './quote/uniswap';
 import { buildTransferTransaction } from './quote/transfer';
 // import { buildLiFiTransaction } from './quote/lifi';
 import { getRouterQuoteData } from './quote/router';
+const { ethers } = require('ethers');
 
 const app = express();
 const routeFinder = new CrossChainRouteFinder();
+
+type TokenSymbol = 'USDC' | 'USDT' | 'ETH' | 'WETH';
+type TokenDecimalsMap = {
+    [key in TokenSymbol]: number;
+};
+
+// Token decimals mapping with type safety
+const TOKEN_DECIMALS: TokenDecimalsMap = {
+    'USDC': 6,
+    'USDT': 6,
+    'ETH': 18,
+    'WETH': 18
+};
+
+const convertToWei = (amount: string | number, token: string) => {
+    const tokenSymbol = token.toUpperCase() as TokenSymbol;
+
+    if (!(tokenSymbol in TOKEN_DECIMALS)) {
+        throw new Error(`Unsupported token: ${token}`);
+    }
+
+    const decimals = TOKEN_DECIMALS[tokenSymbol];
+    return ethers.utils.parseUnits(amount.toString(), decimals);
+};
+
+const processTokenInput = (fromToken: string, inputAmount: any) => {
+    // Convert token symbols to uppercase for comparison
+    const tokenSymbol = fromToken.toUpperCase();
+    let processedToken = fromToken;
+    let inputWeiAmount;
+
+    // Convert ETH to WETH if necessary
+    if (tokenSymbol === 'ETH') {
+        processedToken = 'WETH'; // Convert to WETH address in your contract
+    }
+
+    // Convert input amount to Wei based on token decimals
+    try {
+        inputWeiAmount = convertToWei(inputAmount, tokenSymbol);
+    } catch (error) {
+        throw new Error(`Error converting amount to wei: ${error}`);
+    }
+
+    return {
+        processedToken,
+        inputWeiAmount: inputWeiAmount.toString()
+    };
+};
 
 app.use(json());
 app.use(cors());
@@ -38,9 +87,9 @@ app.post('/api/transactions/build/uniswap', async (req: Request, res: Response) 
 
         // Validate required parameters
         if (!chainId || !tokenIn || !tokenOut || !amount || !recipient) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                error: 'Missing required parameters. Need chainId, tokenIn, tokenOut, amount, and recipient.' 
+                error: 'Missing required parameters. Need chainId, tokenIn, tokenOut, amount, and recipient.'
             });
         }
 
@@ -61,7 +110,7 @@ app.post('/api/transactions/build/uniswap', async (req: Request, res: Response) 
 
     } catch (error) {
         console.error('Error building Uniswap transaction:', error);
-        return res.status(500).json({ 
+        return res.status(500).json({
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error occurred'
         });
@@ -75,9 +124,9 @@ app.post('/api/transactions/build/transfer', async (req: Request, res: Response)
 
         // Validate required parameters
         if (!to || !amount || !chainId) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                error: 'Missing required parameters. Need to, amount, and chainId.' 
+                error: 'Missing required parameters. Need to, amount, and chainId.'
             });
         }
 
@@ -94,7 +143,7 @@ app.post('/api/transactions/build/transfer', async (req: Request, res: Response)
 
     } catch (error) {
         console.error('Error building transfer transaction:', error);
-        return res.status(500).json({ 
+        return res.status(500).json({
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error occurred'
         });
@@ -151,7 +200,7 @@ app.post('/api/transactions/build/transfer', async (req: Request, res: Response)
 
 app.post('/api/transactions/build/router', async (req: Request, res: Response) => {
     try {
-        const { 
+        const {
             fromToken,
             toToken,
             fromChainName,
@@ -192,7 +241,7 @@ app.post('/api/transactions/build/router', async (req: Request, res: Response) =
 
 app.post('/api/request-route', async (req: Request, res: Response) => {
     try {
-        const { 
+        const {
             fromToken,
             toToken,
             fromChainName,
@@ -209,6 +258,8 @@ app.post('/api/request-route', async (req: Request, res: Response) => {
                 error: 'Missing required parameters'
             });
         }
+
+        const { processedToken, inputWeiAmount } = processTokenInput(fromToken, inputAmount);
 
         const quote = {
             fromToken,
