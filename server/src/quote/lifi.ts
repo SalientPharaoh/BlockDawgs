@@ -16,6 +16,17 @@ const CHAIN_IDS: { [key: string]: number } = {
     'AVALANCHE': ChainId.AVALANCHE,
 };
 
+interface BuildLiFiParams {
+    fromChainId: number;
+    toChainId: number;
+    fromToken: string;
+    toToken: string;
+    fromAmount: string;
+    fromAddress: string;
+    toAddress: string;
+    slippage?: number;
+}
+
 export const calculateLiFiFees = async (
     fromToken: string,
     toToken: string,
@@ -95,6 +106,50 @@ export const calculateLiFiFees = async (
         return null;
     }
 };
+
+// export async function buildLiFiTransaction(params: BuildLiFiParams) {
+//     const {
+//         fromChainId,
+//         toChainId,
+//         fromToken,
+//         toToken,
+//         fromAmount,
+//         fromAddress,
+//         toAddress,
+//         slippage = 0.5
+//     } = params;
+
+//     // Get route
+//     const routesRequest: RoutesRequest = {
+//         fromChainId,
+//         toChainId,
+//         fromTokenAddress: fromToken,
+//         toTokenAddress: toToken,
+//         fromAmount,
+//         fromAddress,
+//         toAddress,
+//         slippage: slippage / 100 // Convert percentage to decimal
+//     };
+
+//     const result = await getRoutes(routesRequest);
+
+//     if (!result || result.routes.length === 0) {
+//         throw new Error('No route found');
+//     }
+
+//     // Get the best route (first route is usually the best)
+//     const bestRoute = result.routes[0];
+
+//     // Extract transaction data from the first step
+//     return {
+//         to: bestRoute.steps[0].transaction.to,
+//         data: bestRoute.steps[0].transaction.data,
+//         value: bestRoute.steps[0].transaction.value,
+//         gasLimit: bestRoute.steps[0].estimate.gasCosts[0].amount,
+//         tool: bestRoute.steps[0].tool,
+//         expectedOutput: bestRoute.toAmount
+//     };
+// }
 
 // For testing
 if (require.main === module) {

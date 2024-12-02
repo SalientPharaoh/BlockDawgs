@@ -101,6 +101,36 @@ class CrossChainRouteFinder {
         const routes: (RouteDetails[] | null)[] = [];
 
         try {
+            // Check if it's the same token and chain but different addresses
+            if (quote.fromToken.toLowerCase() === quote.toToken.toLowerCase() &&
+                quote.fromChainName.toLowerCase() === quote.toChainName.toLowerCase() &&
+                quote.userAddress.toLowerCase() !== quote.receiverAddress.toLowerCase()) {
+                
+                // Create a direct native transfer route
+                const nativeTransferRoute: RouteDetails = {
+                    protocol: "NATIVE",
+                    fromToken: quote.fromToken,
+                    toToken: quote.toToken,
+                    fromChainName: quote.fromChainName,
+                    toChainName: quote.toChainName,
+                    inputAmount: quote.inputAmount,
+                    outputAmount: quote.inputAmount, // Same amount, just transferred
+                    fee: {
+                        outputAmount: quote.inputAmount,
+                        gasFee: "21000", // Standard transfer gas
+                        gasFeeUSD: "1", // Approximate USD cost
+                        liquidityProviderFee: "0",
+                        totalFee: "21000",
+                        totalFeeUSD: "1",
+                        feePercentage: "0.1"
+                    },
+                    userAddress: quote.userAddress,
+                    receiverAddress: quote.receiverAddress
+                };
+                routes.push([nativeTransferRoute]);
+                return routes;
+            }
+
             // Path 1: Direct bridge using Router Protocol
             const directRouterRoute = await this.createCrossChainRoute(quote, CROSS_CHAIN.ROUTER);
             if (directRouterRoute) {

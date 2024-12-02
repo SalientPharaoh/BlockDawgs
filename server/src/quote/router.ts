@@ -16,6 +16,16 @@ interface QuoteParams {
     partnerId: string;
 }
 
+interface BuildRouterParams {
+    fromToken: string;
+    toToken: string;
+    fromChainName: string;
+    toChainName: string;
+    inputAmount: string;
+    userAddress: string;
+    receiverAddress: string;
+}
+
 // Fetch quote from Pathfinder API and calculate fees
 const getQuote = async (params: QuoteParams): Promise<FeeEstimation | null> => {
     const quoteUrl = `${PATH_FINDER_API_URL}/v2/quote`;
@@ -82,8 +92,6 @@ export const getRouterQuoteData = async (
     inputAmount: string,
     fromChain: string,
     toChain: string,
-    userAddress: string,
-    receiverAddress: string
 ): Promise<any> => {
     try {
         const fromTokenDetails = getTokenDetails(fromChain, fromSymbol);
@@ -99,13 +107,13 @@ export const getRouterQuoteData = async (
             amount: inputAmount,
             fromTokenChainId: String(fromTokenDetails.chainId),
             toTokenChainId: String(toTokenDetails.chainId),
-            userAddress: userAddress,
-            recipient: receiverAddress,
-            partnerId: "1", // Default partner ID
+            partnerId: "1" // Default partner ID
         };
 
+        const quoteUrl = `${PATH_FINDER_API_URL}/v2/quote`;
+
         const response = await axios.get(
-            'https://api.pathfinder.routerprotocol.com/api/v2/quote',
+            quoteUrl,
             { params }
         );
 
@@ -117,7 +125,9 @@ export const getRouterQuoteData = async (
             success: true,
             data: {
                 ...response.data,
-            }
+            },
+            fromToken: fromTokenDetails.address,
+            toToken: toTokenDetails.address
         };
     } catch (error) {
         console.error('Error getting Router Protocol quote data:', error);

@@ -1,9 +1,33 @@
 import { ethers } from 'ethers';
 import { FeeAmount } from '@uniswap/v3-sdk';
-import { Token } from '@uniswap/sdk-core';
+import { Token, CurrencyAmount, TradeType, Percent, Currency } from '@uniswap/sdk-core';
+import {
+    Pool,
+    Route,
+    SwapOptions,
+    SwapQuoter,
+    SwapRouter,
+    Trade,
+} from '@uniswap/v3-sdk';
 import { getTokenDetails, getChainConfig } from '../lib/constants';
 import { FeeEstimation } from '../types';
 import { convertGasToUSD } from '../lib/price';
+
+interface BuildSwapParams {
+    chainId: number;
+    tokenIn: {
+        address: string;
+        decimals: number;
+    };
+    tokenOut: {
+        address: string;
+        decimals: number;
+    };
+    amount: string;
+    slippageTolerance?: string;
+    recipient: string;
+    deadline?: number;
+}
 
 export async function calculateUniswapFees(
     chainId: string,
@@ -106,6 +130,206 @@ export async function calculateUniswapFees(
             poolFee: FeeAmount.MEDIUM
         };
     }
+}
+import JSBI from 'jsbi';
+
+// Constants
+const SWAP_ROUTER_ADDRESS = '0xE592427A0AEce92De3Edee1F18E0157C05861564';
+const QUOTER_CONTRACT_ADDRESS = '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6';
+const DEFAULT_DEADLINE_MINUTES = 20;
+const DEFAULT_POOL_FEE = 3000; // 0.3%
+
+// ERC20 ABI for approval
+const ERC20_ABI = [
+    'function approve(address spender, uint256 amount) external returns (bool)',
+    'function allowance(address owner, address spender) external view returns (uint256)'
+];
+
+// Types
+interface BuildUniswapParams {
+    chainId: number;
+    tokenIn: Token;
+    tokenOut: Token;
+    amount: string;
+    slippageTolerance?: number;
+    recipient: string;
+    deadline?: number;
+}
+
+interface PoolInfo {
+    sqrtPriceX96: string;
+    liquidity: string;
+    tick: number;
+}
+
+interface TransactionResponse {
+    success: boolean;
+    data?: {
+        approve: {
+            to: string;
+            data: string;
+            value: string;
+        };
+        swap: {
+            to: string;
+            data: string;
+            value: string;
+            gasLimit: string;
+        };
+        expectedOutput: string;
+    };
+    error?: string;
+}
+
+// Main function to build Uniswap transaction
+export async function buildUniswapTransaction(params: BuildUniswapParams): Promise<TransactionResponse> {
+    try {
+        const {
+            chainId,
+            tokenIn,
+            tokenOut,
+            amount,
+            recipient,
+            deadline = Math.floor(Date.now() / 1000) + (DEFAULT_DEADLINE_MINUTES * 60)
+        } = params;
+
+        // Create trade
+        const trade = await createTrade(tokenIn, tokenOut, amount);
+
+        // Get swap transaction
+        const swapTransaction = await createSwapTransaction(trade, {
+            slippageTolerance: new Percent(0.5),
+            deadline,
+            recipient
+        });
+
+        // Get approve transaction
+        const approveTransaction = await createApproveTransaction(tokenIn, amount);
+
+        return {
+            success: true,
+            data: {
+                approve: approveTransaction,
+                swap: swapTransaction,
+                expectedOutput: trade.outputAmount.quotient.toString()
+            }
+        };
+
+    } catch (error) {
+        console.error('Error building Uniswap transaction:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred'
+        };
+    }
+}
+
+// Helper functions for trade creation
+async function createTrade(tokenIn: Token, tokenOut: Token, amount: string): Promise<Trade<Token, Token, TradeType>> {
+    const poolInfo = await getPoolInfo(tokenIn, tokenOut);
+    const pool = createPool(tokenIn, tokenOut, poolInfo);
+    const route = new Route([pool], tokenIn, tokenOut);
+    const amountOut = await getOutputQuote(route, amount, tokenIn.decimals);
+
+    return Trade.createUncheckedTrade({
+        route,
+        inputAmount: CurrencyAmount.fromRawAmount(
+            tokenIn,
+            fromReadableAmount(amount, tokenIn.decimals).toString()
+        ),
+        outputAmount: CurrencyAmount.fromRawAmount(
+            tokenOut,
+            JSBI.BigInt(amountOut)
+        ),
+        tradeType: TradeType.EXACT_INPUT,
+    });
+}
+
+function createPool(tokenIn: Token, tokenOut: Token, poolInfo: PoolInfo): Pool {
+    return new Pool(
+        tokenIn,
+        tokenOut,
+        DEFAULT_POOL_FEE,
+        poolInfo.sqrtPriceX96,
+        poolInfo.liquidity,
+        poolInfo.tick
+    );
+}
+
+async function createSwapTransaction(
+    trade: Trade<Token, Token, TradeType>,
+    options: SwapOptions
+): Promise<{ to: string; data: string; value: string; gasLimit: string }> {
+    const methodParameters = SwapRouter.swapCallParameters([trade], options);
+
+    return {
+        to: SWAP_ROUTER_ADDRESS,
+        data: methodParameters.calldata,
+        value: methodParameters.value,
+        gasLimit: '350000' // Estimated gas limit
+    };
+}
+
+async function createApproveTransaction(
+    token: Token,
+    amount: string
+): Promise<{ to: string; data: string; value: string }> {
+    const approveData = await getTokenTransferApproval(token, amount);
+
+    return {
+        to: token.address,
+        data: approveData,
+        value: '0'
+    };
+}
+
+// Low-level helper functions
+async function getPoolInfo(tokenIn: Token, tokenOut: Token): Promise<PoolInfo> {
+    // This is a mock implementation - you should implement actual pool info fetching
+    return {
+        sqrtPriceX96: '1',
+        liquidity: '1000000',
+        tick: 0
+    };
+}
+
+async function getOutputQuote(
+    route: Route<Currency, Currency>,
+    amountIn: string,
+    decimals: number
+): Promise<string> {
+    const { calldata } = await SwapQuoter.quoteCallParameters(
+        route,
+        CurrencyAmount.fromRawAmount(
+            route.input,
+            fromReadableAmount(amountIn, decimals).toString()
+        ),
+        TradeType.EXACT_INPUT,
+        { useQuoterV2: true }
+    );
+
+    // In production, you would make an actual RPC call here
+    const quoteCallReturnData = await mockProviderCall(calldata);
+    return ethers.utils.defaultAbiCoder.decode(['uint256'], quoteCallReturnData)[0];
+}
+
+async function getTokenTransferApproval(token: Token, amount: string): Promise<string> {
+    const iface = new ethers.utils.Interface(ERC20_ABI);
+    return iface.encodeFunctionData('approve', [
+        SWAP_ROUTER_ADDRESS,
+        fromReadableAmount(amount, token.decimals).toString()
+    ]);
+}
+
+function fromReadableAmount(amount: string, decimals: number): JSBI {
+    const extraDigits = Math.pow(10, decimals);
+    const adjustedAmount = Number(amount) * extraDigits;
+    return JSBI.BigInt(Math.floor(adjustedAmount));
+}
+
+// Mock function for demo - replace with actual provider call in production
+async function mockProviderCall(calldata: string): Promise<string> {
+    return ethers.utils.defaultAbiCoder.encode(['uint256'], [ethers.utils.parseEther('1')]);
 }
 
 // For testing
