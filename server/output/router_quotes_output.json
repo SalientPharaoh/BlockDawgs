@@ -1,0 +1,187 @@
+{
+  "timestamp": "2024-12-01T14:16:28.030Z",
+  "quotes": [
+    {
+      "sourceChainId": 1,
+      "sourceTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "destinationChainId": 1,
+      "destinationTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "inputAmount": "20000000000000000000",
+      "outputAmount": "64396246335846",
+      "totalFeeEstimation": {
+        "gasFee": "0",
+        "liquidityProviderFee": "0",
+        "totalFee": "0",
+        "feePercentage": "0.00%"
+      },
+      "poolFee": 1
+    },
+    {
+      "sourceChainId": 1,
+      "sourceTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "destinationChainId": 1,
+      "destinationTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "inputAmount": "50000000000000000000",
+      "outputAmount": "64396288018220",
+      "totalFeeEstimation": {
+        "gasFee": "0",
+        "liquidityProviderFee": "0",
+        "totalFee": "0",
+        "feePercentage": "0.00%"
+      },
+      "poolFee": 1
+    },
+    {
+      "sourceChainId": 1,
+      "sourceTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "destinationChainId": 1,
+      "destinationTokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "inputAmount": "20000000000000000000",
+      "outputAmount": "17998062713726058891124",
+      "totalFeeEstimation": {
+        "gasFee": "0",
+        "liquidityProviderFee": "0",
+        "totalFee": "0",
+        "feePercentage": "0.00%"
+      },
+      "poolFee": 1
+    },
+    {
+      "sourceChainId": 1,
+      "sourceTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "destinationChainId": 1,
+      "destinationTokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "inputAmount": "50000000000000000000",
+      "outputAmount": "17998074819345924359170",
+      "totalFeeEstimation": {
+        "gasFee": "0",
+        "liquidityProviderFee": "0",
+        "totalFee": "0",
+        "feePercentage": "0.00%"
+      },
+      "poolFee": 1
+    },
+    {
+      "sourceChainId": 1,
+      "sourceTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "destinationChainId": 8453,
+      "destinationTokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "inputAmount": "20000000000000000000",
+      "outputAmount": "20000000000000000000",
+      "totalFeeEstimation": {
+        "gasFee": "3333333333333",
+        "liquidityProviderFee": "0",
+        "totalFee": "3333333333333",
+        "feePercentage": "0.00%"
+      },
+      "poolFee": 1
+    },
+    {
+      "sourceChainId": 1,
+      "sourceTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "destinationChainId": 8453,
+      "destinationTokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "inputAmount": "50000000000000000000",
+      "outputAmount": "50000000000000000000",
+      "totalFeeEstimation": {
+        "gasFee": "3333333333333",
+        "liquidityProviderFee": "0",
+        "totalFee": "3333333333333",
+        "feePercentage": "0.00%"
+      },
+      "poolFee": 1
+    },
+    {
+      "sourceChainId": 1,
+      "sourceTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "destinationChainId": 1,
+      "destinationTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "inputAmount": "20000000000000000000",
+      "outputAmount": "111760188549025",
+      "totalFeeEstimation": {
+        "gasFee": "0",
+        "liquidityProviderFee": "0",
+        "totalFee": "0",
+        "feePercentage": "0.00%"
+      },
+      "poolFee": 1
+    },
+    {
+      "sourceChainId": 1,
+      "sourceTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "destinationChainId": 1,
+      "destinationTokenAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "inputAmount": "50000000000000000000",
+      "outputAmount": "111760188549025",
+      "totalFeeEstimation": {
+        "gasFee": "0",
+        "liquidityProviderFee": "0",
+        "totalFee": "0",
+        "feePercentage": "0.00%"
+      },
+      "poolFee": 1
+    },
+    {
+      "sourceChainId": 1,
+      "sourceTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "destinationChainId": 1,
+      "destinationTokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "inputAmount": "20000000000000000000",
+      "outputAmount": "28341059389693883025647",
+      "totalFeeEstimation": {
+        "gasFee": "0",
+        "liquidityProviderFee": "0",
+        "totalFee": "0",
+        "feePercentage": "0.00%"
+      },
+      "poolFee": 1
+    },
+    {
+      "sourceChainId": 1,
+      "sourceTokenAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "destinationChainId": 1,
+      "destinationTokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+      "inputAmount": "50000000000000000000",
+      "outputAmount": "28341078697403781145332",
+      "totalFeeEstimation": {
+        "gasFee": "0",
+        "liquidityProviderFee": "0",
+        "totalFee": "0",
+        "feePercentage": "0.00%"
+      },
+      "poolFee": 1
+    }
+  ],
+  "errors": [
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\",\"toTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\",\"toTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"toTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"toTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"toTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"toTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\",\"toTokenAddress\":\"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\",\"toTokenAddress\":\"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\",\"toTokenAddress\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\",\"toTokenAddress\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\",\"toTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\",\"toTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\",\"toTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\",\"toTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"1\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"toTokenAddress\":\"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"toTokenAddress\":\"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"toTokenAddress\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"toTokenAddress\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"toTokenAddress\":\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"toTokenAddress\":\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"toTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"toTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"toTokenAddress\":\"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"toTokenAddress\":\"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"toTokenAddress\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"toTokenAddress\":\"0xdAC17F958D2ee523a2206206994597C13D831ec7\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"toTokenAddress\":\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"toTokenAddress\":\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"1\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"toTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"amount\":\"20000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}",
+    "Failed to retrieve quote for {\"fromTokenAddress\":\"0x4200000000000000000000000000000000000006\",\"toTokenAddress\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"amount\":\"50000000000000000000\",\"fromTokenChainId\":\"8453\",\"toTokenChainId\":\"8453\",\"partnerId\":\"1\"}"
+  ]
+}
