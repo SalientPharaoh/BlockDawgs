@@ -5,7 +5,6 @@ const colors = require("tailwindcss/colors");
 const {
   default: flattenColorPalette,
 } = require("tailwindcss/lib/util/flattenColorPalette");
- 
 
 const config: Config = {
   content: [
@@ -29,24 +28,45 @@ const config: Config = {
         float: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-20px)' },
-        },
+        }
       },
+      typography: (theme: any) => ({
+        invert: {
+          css: {
+            '--tw-prose-body': theme('colors.white'),
+            '--tw-prose-headings': theme('colors.white'),
+            '--tw-prose-lead': theme('colors.white/70'),
+            '--tw-prose-links': theme('colors.purple.400'),
+            '--tw-prose-bold': theme('colors.white'),
+            '--tw-prose-counters': theme('colors.white/70'),
+            '--tw-prose-bullets': theme('colors.white/70'),
+            '--tw-prose-hr': theme('colors.white/30'),
+            '--tw-prose-quotes': theme('colors.white/70'),
+            '--tw-prose-quote-borders': theme('colors.white/30'),
+            '--tw-prose-captions': theme('colors.white/70'),
+            '--tw-prose-code': theme('colors.white'),
+            '--tw-prose-pre-code': theme('colors.white'),
+            '--tw-prose-pre-bg': 'rgb(0 0 0 / 0.3)',
+            '--tw-prose-th-borders': theme('colors.white/30'),
+            '--tw-prose-td-borders': theme('colors.white/20'),
+          },
+        },
+      }),
     },
   },
   plugins: [
-    addVariablesForColors,
+    require('@tailwindcss/typography'),
+    function ({ addBase, theme }: any) {
+      let allColors = flattenColorPalette(theme("colors"));
+      let newVars = Object.fromEntries(
+        Object.entries(allColors).map(([key, val]) => [`--${key}`, val])
+      );
+ 
+      addBase({
+        ":root": newVars,
+      });
+    },
   ],
 };
-
-function addVariablesForColors({ addBase, theme }: any) {
-  let allColors = flattenColorPalette(theme("colors"));
-  let newVars = Object.fromEntries(
-    Object.entries(allColors).map(([key, val]) => [`--${key}`, val])
-  );
- 
-  addBase({
-    ":root": newVars,
-  });
-}
 
 export default config;
