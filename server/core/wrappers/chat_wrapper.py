@@ -27,8 +27,13 @@ class ChatState(MessagesState):
     should_end: bool
     task_determined: str
     state_variables: list
+    has_optimal_path: bool
 # Define the function that calls the model
 def call_model(state: ChatState):
+    if state["has_optimal_path"]:   
+        has_optimal_path = state["has_optimal_path"]
+    else:
+        has_optimal_path = "False"
     context ="""
         (1) Optimal_Path_SameChainSelf[INPUTS]: It is a subgraph which generates optimal paths. It is 
         useful when you need want to determine the most optimal path to complete a transaction on the blockchain when there is a same chain Transaction to self.
@@ -77,7 +82,15 @@ def call_model(state: ChatState):
     <requirements>
     {data_format}
     </requirements>
-    """.format(data_format = data_format)
+
+    2. If the last user message is "EXECUTE" and the has_optimal_path is True then you have to give the user output in the required JSON format.
+        has_optimal_path: {has_optimal_path}
+     - Only execute the optimal path when the user types the say "EXECUTE". Then you have to return this in the output in the required JSON format:
+     {{
+                     "should_execute": "True"
+     }}
+
+    """.format(data_format = data_format, has_optimal_path = has_optimal_path)
 
     prompt = """ 
             You are smart web3 agent which interacts with the user and helps them with web3. \n
@@ -104,7 +117,7 @@ def call_model(state: ChatState):
             - Format must be exactly:
                 {{
                 "should_end": "True",
-                "task_determined": final_task
+                "task_determined": final_task,
                 }}
             - No other text should be included before or after the JSON.
             - The task_determined should clearly specify which tool and method was chosen
@@ -165,7 +178,8 @@ def chat_subgraph_wrapper(state):
     final_task = []
     init_state = ChatState(
         messages=state['messages'],
-        state_variables=str(list(state.keys()))
+        state_variables=str(list(state.keys())),
+        has_optimal_path = state['has_optimal_path']
     )
     config = {"configurable": {"thread_id": state['thread_id']}}
     for state in app.stream(init_state,config):
@@ -175,10 +189,12 @@ def chat_subgraph_wrapper(state):
 
             try:
                 response_data = json.loads(ai_response)
-                if response_data['should_end']:
+                if "should_end" in response_data and response_data['should_end']:
                     final_task.append(response_data.get('task_determined'))
                     print(colored(final_task[-1],"yellow"))
                     obj = {"task_ready":True,"task":final_task[-1]}
+                elif "should_execute" in response_data and response_data['should_execute']:
+                    obj = {"should_execute":True}
             except json.JSONDecodeError:
                 obj = {"inner_messages":state['model']['messages']}
                 pass

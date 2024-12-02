@@ -19,4 +19,8 @@ class ReWOO(MessagesState):
     thread_id: str
     state_variables: list[str]
     chain_finished: bool
+    optimal_plan: str
+    optimal_path: dict
+    has_optimal_path: bool
+    should_execute: bool
     

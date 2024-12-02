@@ -11,4 +11,6 @@ def node(state):
         state['task'] = updated_state['task']
         print(colored(state['task'],"yellow"))
         state['task_ready'] = True
+    if "should_execute" in updated_state and updated_state['should_execute']:
+        state['should_execute'] = True
     return state

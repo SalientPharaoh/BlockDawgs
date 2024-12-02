@@ -32,10 +32,26 @@ def convert_langchain_message_to_vercel_message(message: BaseMessage) -> Dict[st
     if isinstance(message, HumanMessage):
         return {"content": message.content, "role": "user"}
     elif isinstance(message, AIMessage):
+        if "hehehehe" in message.content:
+            print
+            message_string = message.content.split("hehehehe")[0]
+            optimal_path = message.content.split("hehehehe")[1]
+            print(colored(optimal_path,"red"))
+            print(colored(type(optimal_path),"red"))
+            # optimal_path = json.loads(optimal_path)
+            return {
+                "content": message_string,
+                "role": "assistant",
+                "execute_path": optimal_path
+            }
         return {
                 "content": message.content,
                 "role": "assistant",
             }
+    elif isinstance(message, dict):
+        if 'optimal_path' in message :
+            return {"isExecute":True , "executePath":message['optimal_path']}
+  
 from termcolor import colored
 @app.post("/api/chat")
 async def process_request(request: Request):
@@ -53,7 +69,7 @@ async def process_request(request: Request):
 
        
     return StreamingResponse(event_generator(), media_type="text/plain")
-    
+
 @app.get("/")
 async def root():
     return {"message": "API is running"}

@@ -8,6 +8,8 @@ from .tool_execution_node import tool_execution
 from .planning_node import get_plan
 from .utils.checkpointer import checkpointer
 from .chat_node import node as chat_node
+from .optimal_node import node as optimal_node
+from .execution_node import node as execution_node
 from langgraph.checkpoint.memory import MemorySaver
 from termcolor import colored
 from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage, AIMessage
@@ -15,7 +17,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage, AIMe
 
 def ending_node(state: ReWOO):
     print(colored("---Ending Node---", "light_blue"))
-    state['task'] = None
+    # state['task'] = None
     state['steps'] = None
     state['results'] = None
     state['result'] = None
@@ -33,7 +35,7 @@ def _get_current_task(state: ReWOO):
 def _route(state):
     _step = _get_current_task(state)
     if _step is None:
-        return "ending_node"
+        return "optimal_node"
         # return "solver"
     else:
         # We are still executing tasks, loop back to the "tool" node
@@ -44,8 +46,11 @@ graph = StateGraph(ReWOO)
 graph.add_node("init_node", init_node)
 # graph.add_node("user_id_node", user_id_node )
 graph.add_node("chat", chat_node)
+# graph.add_node("chat_execute", chat_execute_node)
 graph.add_node("plan", get_plan)
 graph.add_node("tool", tool_execution)
+graph.add_node("optimal_node", optimal_node)
+graph.add_node("execution_node", execution_node)
 graph.add_node("ending_node", ending_node)
 
 
@@ -53,8 +58,15 @@ graph.add_node("ending_node", ending_node)
 # Add edges
 graph.add_edge(START, "init_node")
 # graph.add_edge("init_node")
+graph.add_edge("init_node" , "chat")
 
-graph.add_edge("init_node", "chat")
+# graph.add_conditional_edges(
+#     "init_node",
+#     lambda x: {
+#         False: ['chat'],
+#         True: ["chat_execute"]
+#     }[x["should_execute"]],
+# )
 graph.add_conditional_edges(
     "chat",
     lambda x: {
@@ -62,8 +74,17 @@ graph.add_conditional_edges(
         True: ["plan"]
     }[x["task_ready"]]
 )
-graph.add_edge("plan", "tool")
+
+# graph.add_edge("plan", "tool")
+graph.add_conditional_edges(
+    "plan",
+    lambda x: {
+        False: ["tool"],
+        True: ["execution_node"]
+    }[x["should_execute"]]
+)
 graph.add_conditional_edges("tool", _route)
+graph.add_edge("optimal_node", "ending_node")
 graph.add_edge("ending_node", END)
 
 # checkpointer = MemorySaver()
@@ -89,6 +110,7 @@ async def run_agent(query,thread_id_provider,sender_address=None):
                 if isinstance(event, dict):
                     print(colored(event, "cyan"))
                     for node_name, node_value in event.items():
+
                         if node_name == "chat":
                              if isinstance(node_value, dict):
                                 messages = node_value['messages']
@@ -96,20 +118,44 @@ async def run_agent(query,thread_id_provider,sender_address=None):
                                 if isinstance(messages[-1], AIMessage):
                                         print(colored(messages[-1].content, "red"))
                                         yield (messages[-1])
-                        elif node_name == "plan":
-                            # task, plan_string , steps 
-                            if isinstance(node_value, dict):
-                                if "task" in node_value:
-                                    task = node_value["task"]
+
+                        # elif node_name == "plan":
+                        #     # task, plan_string , steps 
+                        #     if isinstance(node_value, dict):
+                        #         if "task" in node_value:
+                        #             task = node_value["task"]
                                     
-                                if "plan_string" in node_value:
-                                    plan_string = node_value["plan_string"]
-                                    plans = plan_string.split("\n")
-                                if "steps" in node_value:
-                                    steps = node_value["steps"]
-                                content = f"**Task Detected**: \n{task} \n\n **Actions Planned**:\n {plan_string}"
-                                message = AIMessage(content=content , name="tool") 
-                                yield(message)
+                        #         if "plan_string" in node_value:
+                        #             plan_string = node_value["plan_string"]
+                        #             plans = plan_string.split("\n")
+                        #         if "steps" in node_value:
+                        #             steps = node_value["steps"]
+                        #         content = f"**Task Detected**: \n{task} \n\n **Actions Planned**:\n {plan_string}"
+                        #         message = AIMessage(content=content , name="tool") 
+                        #         yield(message)
+
+                        elif node_name == "optimal_node":
+                            # results, result, should_end
+                            if isinstance(node_value, dict):
+                                if "optimal_plan" in node_value:
+                                    optimal_plan = node_value["optimal_plan"]
+                                    content = f"{optimal_plan}"
+                                    optimal_path = node_value["optimal_path"]
+                                    message = AIMessage(content=content + " hehehehe " + str(optimal_path) , name="tool") 
+                                    yield(message)
+                        
+                        elif node_name == "execution_node":
+                            if isinstance(node_value, dict):
+                                if "should_execute" in node_value:
+                                    should_execute = node_value["should_execute"]
+                                    if should_execute:
+                                        obj = {
+                                            "content" :True,
+                                            "optimal_path" :node_value["optimal_path"]
+                                        }
+                                        yield(obj)
+
+                               
 
     finally:
             print("Graph Execution Completed")
