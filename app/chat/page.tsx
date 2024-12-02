@@ -1,435 +1,631 @@
-"use client"
+'use client';
 
-import React, { useState, useEffect } from 'react'
-import { PanelLeftClose, PanelLeft, ArrowLeft } from 'lucide-react'
-import { v4 as uuidv4 } from 'uuid'
-import { threadStorage } from '@/lib/threadStorage'
-import AnimatedBackground from '../components/chat/AnimatedBackground'
-import ProfileDropdown from '../components/chat/ProfileDropdown'
-import Sidebar from '../components/chat/Sidebar'
-import ChatArea from '../components/chat/ChatArea'
+import { useState, useRef, useEffect } from 'react';
+import { Message, StreamMessage, Chat, QuickAction } from '../types';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
-interface Chat {
-  id: number
-  threadId: string
-  title: string
-  messages: Message[]
-}
+type ChatMap = {
+  [key: string]: Chat;
+};
 
-interface Message {
-  content: string
-  role: 'user' | 'assistant'
-  timestamp: string
-  isStreaming?: boolean
-  fullContent?: string
-}
+export default function ChatPage() {
+  const [chats, setChats] = useState<ChatMap>({});
+  const [currentChat, setCurrentChat] = useState<Chat | null>(null);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [chatMode, setChatMode] = useState<'chat' | 'command'>('chat');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-export default function MainPage() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false)
-  const [chats, setChats] = useState<Chat[]>([])
-  const [currentChat, setCurrentChat] = useState<Chat | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isGlobalView, setIsGlobalView] = useState(false)
+  // Quick action templates
+  const quickActions: QuickAction[] = [
+    {
+      title: 'Explain Smart Contracts',
+      description: 'Learn about smart contract development and best practices',
+      action: () => handleQuickAction('Can you explain how smart contracts work and what are the best practices for developing them?')
+    },
+    {
+      title: 'DeFi Concepts',
+      description: 'Understand decentralized finance protocols and mechanisms',
+      action: () => handleQuickAction('What are the key concepts in DeFi and how do protocols like lending and AMMs work?')
+    },
+    {
+      title: 'NFT Development',
+      description: 'Create and deploy NFT collections on blockchain',
+      action: () => handleQuickAction('Guide me through creating and deploying an NFT collection on Ethereum. What are the key considerations?')
+    },
+    {
+      title: 'Web3 Integration',
+      description: 'Connect dApps with wallets and blockchain',
+      action: () => handleQuickAction('How do I integrate Web3 wallets like MetaMask into my dApp and interact with smart contracts?')
+    }
+  ];
 
-  const fetchMessagesFromDB = async () => {
-    try {
-      setIsLoading(true)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-      
-      let requestBody = {}
-      const threadId = currentChat?.threadId
-      
-      if (threadId) {
-        requestBody = {
-          thread_ids: [threadId],
-          is_global: false
+  useEffect(() => {
+    // Load chat history from local storage
+    const savedChats = localStorage.getItem('chats');
+    if (savedChats) {
+      try {
+        const parsedChats = JSON.parse(savedChats);
+        setChats(parsedChats);
+        // Set the first chat as current if exists
+        const firstChat = Object.values(parsedChats)[0];
+        if (firstChat) {
+          setCurrentChat(firstChat);
         }
-      } else {
-        if (isGlobalView) {
-          requestBody = {
-            is_global: true
-          }
-        } else {
-          const storedThreadIds = threadStorage.getThreadIds()
-          if (storedThreadIds.length === 0) {
-            setChats([])
-            setIsLoading(false)
-            return
-          }
-          requestBody = {
-            thread_ids: storedThreadIds,
-            is_global: false
-          }
-        }
+      } catch (error) {
+        console.error('Error loading chats:', error);
+        localStorage.removeItem('chats');
       }
+    }
+  }, []);
 
-      const response = await fetch(`${apiUrl}/get_messages`, {
+  useEffect(() => {
+    // Save chats to localStorage whenever they change
+    localStorage.setItem('chats', JSON.stringify(chats));
+  }, [chats]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [currentChat?.messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const createNewChat = () => {
+    const newChat: Chat = {
+      id: Date.now(),
+      threadId: Math.random().toString(36).substring(7),
+      title: 'New Chat',
+      messages: []
+    };
+    setChats(prev => ({ ...prev, [newChat.id]: newChat })); 
+    setCurrentChat(newChat);
+  };
+
+  const handleNewChat = () => {
+    // Find existing empty chat
+    const existingEmptyChat = Object.values(chats).find(chat => chat.messages.length === 0);
+    
+    if (existingEmptyChat) {
+      // Use existing empty chat
+      setCurrentChat(existingEmptyChat);
+    } else {
+      // Create new chat only if no empty chat exists
+      const newChat: Chat = {
+        id: Date.now(),
+        threadId: Math.random().toString(36).substring(7),
+        title: 'New Chat',
+        messages: []
+      };
+      setChats(prev => ({ ...prev, [newChat.id]: newChat }));
+      setCurrentChat(newChat);
+    }
+    setIsSidebarVisible(false);
+  };
+
+  const handleQuickAction = (prompt: string) => {
+    if (!currentChat) {
+      handleNewChat();
+    }
+    sendMessage(prompt);
+  };
+
+  const sendMessage = async (text: string = inputMessage) => {
+    if (!text.trim() || !currentChat) return;
+
+    const newMessage: Message = {
+      content: text,
+      role: 'user',
+      timestamp: new Date().toISOString()
+    };
+
+    // Update current chat
+    const updatedChat = {
+      ...currentChat,
+      messages: [...currentChat.messages, newMessage]
+    };
+
+    // Update chats state
+    setChats(prev => ({ ...prev, [updatedChat.id]: updatedChat }));
+    setCurrentChat(updatedChat);
+    setInputMessage('');
+    setIsTyping(true);
+
+    try {
+      // Send request to backend
+      const response = await fetch('https://blockdawgs-backend-242842293866.asia-south1.run.app/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'text/event-stream'
         },
-        body: JSON.stringify(requestBody)
-      })
+        body: JSON.stringify({
+          messages: updatedChat.messages.map(msg => ({
+            content: msg.content,
+            role: msg.role
+          })),
+          thread_id: updatedChat.id.toString()
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json()
-      const posts = data.messages
-  
-      const seenMessages = new Set()
-      const uniqueChats: Chat[] = []
-  
-      posts.forEach((post: any) => {
-        if (post?.query?.model?.messages) {
-          const dbMessages = post.query.model.messages
-          const threadId = post.thread_id
-
-          const chatHash = JSON.stringify(dbMessages.map((msg: any) => ({
-            content: msg.kwargs.content.trim(),
-            type: msg.kwargs.type
-          })))
-  
-          if (!seenMessages.has(chatHash)) {
-            seenMessages.add(chatHash)
-            const newChat = convertDBMessagesToChat(dbMessages, uniqueChats.length, threadId)
-            uniqueChats.push(newChat)
-          }
-        }
-      })
-  
-      setChats(uniqueChats)
-    } catch (error) {
-      console.error('Error fetching messages:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const deleteFromDB = async (threadId: string) => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-      
-      const response = await fetch(`${apiUrl}/messages`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ thread_id: threadId })
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      const responseText = await response.text();
+      if (!responseText || responseText.trim() === '') {
+        throw new Error('Empty response from server');
       }
 
-      threadStorage.removeThreadId(threadId)
-      await fetchMessagesFromDB()
-    } catch (error) {
-      console.error('Error deleting from database:', error)
-      throw error
-    }
-  }
+      // Handle both SSE format and regular JSON
+      const jsonStr = responseText.includes('data: ') 
+        ? responseText.replace('data: ', '') 
+        : responseText;
+      const data = JSON.parse(jsonStr);
 
-  useEffect(() => {
-    fetchMessagesFromDB()
-  }, [])
-
-  const handleSendMessage = async (message: string, chatToUse?: Chat) => {
-    const wordCount = message.trim().split(/\s+/).length
-    if (wordCount > 100) {
-      alert('Please keep your message under 100 words for better responses.')
-      return
-    }
-
-    if (isLoading) return
-    
-    try {
-      localStorage.setItem('lastMessageTime', Date.now().toString())
-      
-      const activeChat = chatToUse || currentChat || {
-        id: Date.now(),
-        threadId: uuidv4(),
-        title: message,
-        messages: [],
-      }
-      const userMessage: Message = {
-        content: message.trim(),
-        role: 'user',
-        timestamp: new Date().toISOString()
-      }
-  
-      const updatedChat: Chat = {
-        ...activeChat,
-        title: activeChat.messages.length === 0 ? message : activeChat.title,
-        messages: [...(activeChat.messages || []), userMessage]
-      }
-
-      const initialAssistantMessage: Message = {
-        content: "",
+      const aiResponse: StreamMessage = {
+        content: data.content,
         role: 'assistant',
         timestamp: new Date().toISOString(),
-        isStreaming: true
+        isStreaming: false
+      };
+      
+      const chatWithResponse = {
+        ...updatedChat,
+        messages: [...updatedChat.messages, aiResponse]
+      };
+
+      setChats(prev => ({ ...prev, [chatWithResponse.id]: chatWithResponse }));
+      setCurrentChat(chatWithResponse);
+    } catch (error) {
+      console.error('Error:', error);
+      // Handle error by adding an error message to the chat
+      const errorMessage: StreamMessage = {
+        content: 'Sorry, there was an error processing your message. Please try again.',
+        role: 'assistant',
+        timestamp: new Date().toISOString(),
+        isStreaming: false
+      };
+      
+      const chatWithError = {
+        ...updatedChat,
+        messages: [...updatedChat.messages, errorMessage]
+      };
+
+      setChats(prev => ({ ...prev, [chatWithError.id]: chatWithError }));
+      setCurrentChat(chatWithError);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!inputMessage.trim()) return;
+
+    // Create or get chat
+    const chatId = currentChat?.id || Date.now().toString();
+    const newUserMessage: Message = {
+      role: 'user',
+      content: inputMessage,
+    };
+
+    // Create new chat if none exists
+    if (!currentChat) {
+      const newChat: Chat = {
+        id: chatId,
+        messages: [newUserMessage],
+      };
+      setChats(prevChats => ({
+        ...prevChats,
+        [chatId]: newChat
+      }));
+      setCurrentChat(newChat);
+    } else {
+      // Update existing chat
+      const updatedChat: Chat = {
+        id: chatId,
+        messages: [...currentChat.messages, newUserMessage],
+      };
+      setChats(prevChats => ({
+        ...prevChats,
+        [chatId]: updatedChat
+      }));
+      setCurrentChat(updatedChat);
+    }
+
+    // Clear input
+    setInputMessage('');
+
+    try {
+      // Get current messages after state update
+      const currentMessages = currentChat 
+        ? [...currentChat.messages, newUserMessage]
+        : [newUserMessage];
+
+      // Send request to backend
+      const response = await fetch('https://blockdawgs-backend-242842293866.asia-south1.run.app/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream'
+        },
+        body: JSON.stringify({
+          messages: currentMessages.map(msg => ({
+            content: msg.content,
+            role: msg.role
+          })),
+          thread_id: chatId.toString(), // Ensure thread_id is a string
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const chatWithAssistant = {
-        ...updatedChat,
-        messages: [...updatedChat.messages, initialAssistantMessage]
+      const responseText = await response.text();
+      if (!responseText || responseText.trim() === '') {
+        throw new Error('Empty response from server');
       }
+
+      let data;
+      try {
+        // Handle both SSE format and regular JSON
+        const jsonStr = responseText.includes('data: ') 
+          ? responseText.replace('data: ', '') 
+          : responseText;
+        data = JSON.parse(jsonStr);
+      } catch (e) {
+        console.error('Failed to parse response:', responseText);
+        throw new Error('Invalid JSON response from server');
+      }
+
+      if (!data || typeof data.content !== 'string' || data.role !== 'assistant') {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response format from server');
+      }
+
+      // Add assistant's response to chat
+      const assistantMessage: Message = {
+        role: 'assistant',
+        content: data.content,
+      };
 
       setChats(prevChats => {
-        const chatExists = prevChats.some(c => c.id === chatWithAssistant.id)
-        const filteredChats = chatExists 
-          ? prevChats.filter(c => c.id !== chatWithAssistant.id) 
-          : prevChats
-        return [chatWithAssistant, ...filteredChats]
-      })
-      setCurrentChat(chatWithAssistant)
-  
-      try {
-        const timeoutPromise = new Promise<Response>((_, reject) => {
-          setTimeout(() => {
-            reject(new Error('TIMEOUT'))
-          }, 35000)
-        })
-        
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-        const fetchPromise = fetch(`${apiUrl}/chat`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({
-            query: message.trim(),
-            id: activeChat.id,
-            threadId: activeChat.threadId
-          }),
-        })
+        const currentChat = prevChats[chatId];
+        if (!currentChat) return prevChats;
 
-        const response = await Promise.race<Response>([fetchPromise, timeoutPromise])
+        const updatedChat: Chat = {
+          id: chatId,
+          messages: [...currentChat.messages, assistantMessage],
+        };
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
+        return {
+          ...prevChats,
+          [chatId]: updatedChat
+        };
+      });
 
-        const data = await response.json()
-        const fullResponse = data.response || 'No response from assistant'
-  
-        let streamedContent = ''
-        const words = fullResponse.split(' ')
-        
-        for (let i = 0; i < words.length; i++) {
-          streamedContent += (i === 0 ? '' : ' ') + words[i]
-          
-          const updatedAssistantMessage: Message = {
-            content: streamedContent,
-            role: 'assistant',
-            timestamp: new Date().toISOString(),
-            isStreaming: i < words.length - 1
-          }
-  
-          const updatedChatWithStream: Chat = {
-            ...chatWithAssistant,
-            messages: [
-              ...chatWithAssistant.messages.slice(0, -1),
-              updatedAssistantMessage
-            ]
-          }
-  
-          setCurrentChat(updatedChatWithStream)
-          setChats(prevChats => {
-            const filteredChats = prevChats.filter(c => c.id !== updatedChatWithStream.id)
-            return [updatedChatWithStream, ...filteredChats]
-          })
-          await new Promise(resolve => setTimeout(resolve, 30))
-        }
-  
-        const finalChat: Chat = {
-          ...chatWithAssistant,
-          messages: [
-            ...chatWithAssistant.messages.slice(0, -1),
-            {
-              content: fullResponse,
-              role: 'assistant',
-              timestamp: new Date().toISOString()
-            } as Message
-          ]
-        }
-        
-        setChats(prevChats => {
-          const filteredChats = prevChats.filter(c => c.id !== finalChat.id)
-          return [finalChat, ...filteredChats]
-        })
-  
-      } catch (error: any) {
-        console.error('Error in chat request:', error)
-        
-        const errorResponse: Message = {
-          content: error.message === 'TIMEOUT' 
-            ? "I apologize for the delay. I'm taking longer than usual to process your request. Please try again or rephrase your question."
-            : "Sorry, there was an error processing your request. Please try again.",
+      setCurrentChat(prevChat => {
+        if (!prevChat) return null;
+        return {
+          id: chatId,
+          messages: [...prevChat.messages, assistantMessage],
+        };
+      });
+
+    } catch (error) {
+      console.error('Error:', error);
+
+      setChats(prevChats => {
+        const currentChat = prevChats[chatId];
+        if (!currentChat) return prevChats;
+
+        const errorMessage: Message = {
           role: 'assistant',
-          timestamp: new Date().toISOString(),
-          isStreaming: false
-        }
+          content: 'Sorry, there was an error processing your message. Please try again.',
+        };
+
+        const updatedChat: Chat = {
+          id: chatId,
+          messages: [...currentChat.messages, errorMessage],
+        };
+
+        return {
+          ...prevChats,
+          [chatId]: updatedChat
+        };
+      });
+
+      setCurrentChat(prevChat => {
+        if (!prevChat) return null;
         
-        const chatWithError = {
-          ...chatWithAssistant,
-          messages: [...chatWithAssistant.messages.slice(0, -1), errorResponse]
-        }
-        setCurrentChat(chatWithError)
-      }
-    } catch (error) {
-      console.error('Error in handleSendMessage:', error)
-    } finally {
-      setIsLoading(false)
+        const errorMessage: Message = {
+          role: 'assistant',
+          content: 'Sorry, there was an error processing your message. Please try again.',
+        };
+
+        return {
+          id: chatId,
+          messages: [...prevChat.messages, errorMessage],
+        };
+      });
     }
-  }
+  };
 
-  const handleDeleteChat = async (chatId: number) => {
-    try {
-      const chatToDelete = chats.find(chat => chat.id === chatId)
-      
-      if (chatToDelete?.threadId) {
-        await deleteFromDB(chatToDelete.threadId)
-        setChats(prevChats => prevChats.filter(chat => chat.id !== chatId))
-        
-        if (currentChat?.id === chatId) {
-          setCurrentChat(null)
-        }
-      } else {
-        console.error('No thread ID found for chat to delete')
-      }
-    } catch (error) {
-      console.error('Error deleting chat:', error)
-      alert('Failed to delete chat. Please try again.')
-    } finally {
-      setIsLoading(false)
+  const switchChat = (chat: Chat) => {
+    setCurrentChat(chat);
+    setIsSidebarVisible(false);
+  };
+
+  const toggleMode = () => {
+    setChatMode(prev => prev === 'chat' ? 'command' : 'chat');
+  };
+
+  const handleDeleteChat = (chatId: number, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent chat selection when clicking delete
+    const updatedChats = Object.fromEntries(Object.entries(chats).filter(([key]) => key !== chatId.toString()));
+    setChats(updatedChats);
+    
+    // If the current chat is deleted, select the first available chat or null
+    if (currentChat?.id === chatId) {
+      setCurrentChat(Object.values(updatedChats)[0] || null);
     }
-  }
-
-  const createNewChat = async (initialMessage?: string) => {
-    const existingEmptyChat = chats.find(chat => 
-      chat.messages.length === 0 && chat.title === 'New Chat'
-    )
-
-    if (existingEmptyChat && !initialMessage) {
-      setCurrentChat(existingEmptyChat)
-      return
-    }
-
-    const threadId = uuidv4()
-    const newChat: Chat = {
-      id: Date.now(),
-      threadId,
-      title: initialMessage || 'New Chat',
-      messages: [],
-    }
-
-    setCurrentChat(newChat)
-    setChats(prevChats => [newChat, ...prevChats])
-    threadStorage.addThreadId(threadId)
-
-    if (initialMessage) {
-      await handleSendMessage(initialMessage, newChat)
-    }
-  }
+  };
 
   return (
-    <div className="relative min-h-screen bg-transparent">
-      {!currentChat?.messages?.length && <AnimatedBackground />}
-      <div className="relative z-10 h-screen flex text-gray-100 overflow-hidden bg-transparent">
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className={`fixed top-4 left-4 z-50 p-2 rounded-lg transition-all duration-300 ease-in-out
-            ${isSidebarOpen 
-              ? 'bg-[#0a0b0f] hover:bg-[#3A3A3A]' 
-              : 'bg-[#12141c] hover:bg-[#282c3a]'
-            }`}
-          aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-        >
-          {isSidebarOpen ? <PanelLeftClose size={24} /> : <PanelLeft size={24} />}
-        </button>
+    <div className="h-screen flex bg-[#0B0B0F] text-white overflow-hidden">
+      {/* Mobile Overlay */}
+      {isSidebarVisible && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-20"
+          onClick={() => setIsSidebarVisible(false)}
+        />
+      )}
 
-        {isSidebarOpen && (
-          <div
-            className={`fixed inset-0 bg-black transition-opacity duration-300 ease-in-out z-20 
-              ${isSidebarOpen ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
-
-        <div
-          className={`fixed left-0 top-0 h-full w-[280px] z-30 transition-all duration-300 ease-in-out transform 
-            ${isSidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}`}
-        >
-          <div className="h-full flex flex-col">
-            <div className="flex-1">
-              {isSidebarOpen && (
-                <Sidebar
-                  isOpen={isSidebarOpen}
-                  onClose={() => setIsSidebarOpen(false)}
-                  chats={chats}
-                  currentChat={currentChat}
-                  onChatSelect={setCurrentChat}
-                  isGlobalView={isGlobalView}
-                  setIsGlobalView={setIsGlobalView}
-                  onNewChat={createNewChat}
-                  onDeleteChat={handleDeleteChat}
-                  onToggleGlobalView={() => setIsGlobalView(!isGlobalView)}
-                  isLoading={isLoading}
-                  setIsSidebarOpen={setIsSidebarOpen}
-                />
-              )}
+      {/* Sidebar */}
+      <aside 
+        className={`
+          fixed top-0 left-0 h-full
+          w-72 
+          bg-[#141419]
+          transform transition-transform duration-300 ease-in-out
+          ${isSidebarVisible ? 'translate-x-0' : '-translate-x-full'}
+          z-30
+          flex flex-col
+          shadow-2xl
+        `}
+      >
+        {/* New Chat Button */}
+        <div className="p-4 border-b border-white/5">
+          <button 
+            onClick={handleNewChat}
+            className="w-full flex items-center space-x-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+          >
+            <div className="p-2 rounded-lg bg-white/5">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                <path d="M12 4L12 20M20 12L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
             </div>
+            <span className="font-medium">New Chat</span>
+          </button>
+        </div>
+
+        {/* Chat History */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {Object.values(chats).map((chat) => (
+            <div 
+              key={chat.id}
+              className={`p-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group flex items-center justify-between
+                ${currentChat?.id === chat.id ? 'bg-white/5' : ''}`}
+              onClick={() => switchChat(chat)}
+            >
+              <div className="flex items-center min-w-0 flex-1">
+                <span className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-sm mr-3 flex-shrink-0">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4-4-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </span>
+                <span className="text-sm text-white/70 truncate">
+                  {chat.messages.length === 0 ? 'New Chat' : chat.messages[0].content}
+                </span>
+              </div>
+              <button
+                onClick={(e) => handleDeleteChat(chat.id, e)}
+                className="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all ml-2 flex-shrink-0"
+                title="Delete chat"
+              >
+                <svg className="w-4 h-4 text-white/40 hover:text-white/90" viewBox="0 0 24 24" fill="none">
+                  <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Sidebar Footer */}
+        <div className="p-4 border-t border-white/5">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
+              <span className="text-sm font-medium">U</span>
+            </div>
+            <span className="text-sm text-white/70">User</span>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <div className="h-16 border-b border-white/5 flex items-center px-6 bg-[#0B0B0F] relative z-10">
+          <button 
+            onClick={() => setIsSidebarVisible(!isSidebarVisible)}
+            className="p-2 hover:bg-white/5 rounded-lg transition-colors"
+            aria-label={isSidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
+          >
+            <svg 
+              className="w-5 h-5" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round"
+            >
+              {isSidebarVisible ? (
+                <path d="M18 6L6 18M6 6l12 12" />
+              ) : (
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+          <div className="ml-4 text-sm text-white/70 truncate">
+            {currentChat?.messages.length === 0 ? 'New Chat' : currentChat?.messages[0].content}
           </div>
         </div>
 
-        <div className="flex-1 relative w-full max-w-full">
-          <div className="relative min-h-screen">
-            <div className="absolute top-4 right-4 z-40">
-              <ProfileDropdown />
-            </div>
-            {isGlobalView && (
-              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-[#6c5dd3] rounded-full text-xs text-white opacity-50">
-                Global View
+        {/* Chat Area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto py-8 px-4">
+            {/* Welcome Section */}
+            {(!currentChat || currentChat.messages.length === 0) && (
+              <div className="text-center">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
+                  <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4-4-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <h1 className="text-2xl font-medium mb-2">{currentChat?.title}</h1>
+                <p className="text-white/60 mb-8">How can I help you today?</p>
+
+                {/* Quick Action Buttons */}
+                <div className="inline-flex rounded-full p-1 bg-white/5">
+                  <button 
+                    className={`px-4 py-2 rounded-full text-sm transition-colors ${chatMode === 'chat' ? 'bg-purple-500 text-white' : 'text-white/60 hover:text-white'}`}
+                    onClick={toggleMode}
+                  >
+                    Chat Mode
+                  </button>
+                  <button 
+                    className={`px-4 py-2 rounded-full text-sm transition-colors ${chatMode === 'command' ? 'bg-purple-500 text-white' : 'text-white/60 hover:text-white'}`}
+                    onClick={toggleMode}
+                  >
+                    Command Mode
+                  </button>
+                </div>
+
+                {/* Quick Links */}
+                <div className="grid grid-cols-3 gap-4 mt-12">
+                  {quickActions.map((action, index) => (
+                    <button 
+                      key={index} 
+                      className="p-6 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+                      onClick={action.action}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center mb-4 mx-auto">
+                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 6v6m0 0v6m0-6h6m-6 0H6a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4-4-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                      <h3 className="text-sm font-medium mb-1">{action.title}</h3>
+                      <p className="text-xs text-white/40 group-hover:text-white/60 transition-colors">{action.description}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
-            {currentChat && (
-              <button
-                onClick={() => {
-                  setCurrentChat(null)
-                  createNewChat()
+
+            {/* Messages */}
+            {currentChat && currentChat.messages.map((message, index) => (
+              <div 
+                key={`${currentChat.id}-${index}`}
+                className={`mb-6 flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} message-appear`}
+                style={{ 
+                  animationDelay: `${index * 100}ms`,
+                  opacity: 0,
                 }}
-                className="absolute top-4 left-20 z-40 p-2 rounded-lg bg-[#12141c] hover:bg-[#282c3a] transition-colors"
-                aria-label="Back to new chat"
               >
-                <ArrowLeft className="h-5 w-5 text-gray-400" />
-              </button>
+                <div 
+                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                    message.role === 'user' 
+                      ? 'bg-purple-500 text-white' 
+                      : 'bg-white/5 text-white/90'
+                  }`}
+                >
+                  {message.role === 'assistant' ? (
+                    <ReactMarkdown
+                      className="leading-relaxed prose prose-invert prose-sm max-w-none"
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        // Override pre and code block styling
+                        pre: ({ node, ...props }) => (
+                          <pre className="bg-black/30 rounded-lg p-2 my-2 overflow-x-auto" {...props} />
+                        ),
+                        code: ({ node, inline, ...props }) => (
+                          inline 
+                            ? <code className="bg-black/30 rounded px-1 py-0.5" {...props} />
+                            : <code className="block" {...props} />
+                        ),
+                        // Style links
+                        a: ({ node, ...props }) => (
+                          <a className="text-purple-400 hover:text-purple-300 underline" {...props} />
+                        ),
+                        // Style lists
+                        ul: ({ node, ...props }) => (
+                          <ul className="list-disc list-inside my-2" {...props} />
+                        ),
+                        ol: ({ node, ...props }) => (
+                          <ol className="list-decimal list-inside my-2" {...props} />
+                        ),
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  ) : (
+                    <p className="leading-relaxed">{message.content}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+            {isTyping && (
+              <div className="flex items-center space-x-2 text-white/40">
+                <div className="h-2 w-2 animate-bounce rounded-full bg-current [animation-delay:-0.3s]"></div>
+                <div className="h-2 w-2 animate-bounce rounded-full bg-current [animation-delay:-0.15s]"></div>
+                <div className="h-2 w-2 animate-bounce rounded-full bg-current"></div>
+              </div>
             )}
-            <ChatArea
-              currentChat={currentChat}
-              onSendMessage={handleSendMessage}
-              createNewChat={createNewChat}
-              isLoading={isLoading}
-            />
+            <div ref={messagesEndRef} />
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
 
-function convertDBMessagesToChat(messages: any[], index: number, threadId: string): Chat {
-  return {
-    id: Date.now() + index,
-    threadId,
-    title: messages[0]?.kwargs?.content || 'New Chat',
-    messages: messages.map(msg => ({
-      content: msg.kwargs.content,
-      role: msg.kwargs.type as 'user' | 'assistant',
-      timestamp: new Date().toISOString()
-    }))
-  }
+        {/* Input Area */}
+        <div className="border-t border-white/5 p-4">
+          <div className="max-w-3xl mx-auto">
+            <form onSubmit={handleSubmit} className="relative">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Message Assistant..."
+                className="w-full bg-white/5 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/40"
+              />
+              <button 
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white/40 hover:text-white transition-colors"
+                disabled={!inputMessage.trim()}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
