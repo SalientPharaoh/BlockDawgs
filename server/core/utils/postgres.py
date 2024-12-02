@@ -5,14 +5,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+NEON_DB_URL = os.getenv("NEON_DB_URL")
 
 connection_kwargs = {
     "autocommit": True,
     "prepare_threshold": 0,
 }
 connection_pool = ConnectionPool(
-    conninfo=DATABASE_URL,
+    conninfo=NEON_DB_URL,
     max_size=20,
     kwargs=connection_kwargs,
 )
