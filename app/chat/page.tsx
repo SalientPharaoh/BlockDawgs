@@ -5,11 +5,7 @@ import { Message, StreamMessage, Chat, QuickAction } from '../types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { LogoutButton } from '../components/okato-auth/LogoutButton';
-import ApiClient from '../api/apiClient';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '../components/okato-auth/AppContext';
-import axios from 'axios';
+import { executeOktoTransfer } from '../utils/oktoTransfer';
 
 type ChatMap = {
   [key: string]: Chat;
@@ -154,7 +150,7 @@ export default function ChatPage() {
             role: msg.role,
           })),
           thread_id: updatedChat.id.toString(),
-          wallet: walletArray
+          sender_address: walletArray[0].address
         }),
       });
 
@@ -174,64 +170,82 @@ export default function ChatPage() {
       const data = JSON.parse(jsonStr);
 
       if(data.isExecute){
-        // Executing the router and native blocks
+
+        // const transfer = await executeOktoTransfer({
+        //   networkName: data.executePath.data.routes[0].fromChainName,
+        //   tokenAddress: '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0', // MATIC token
+        //   quantity: data.executePath.data.routes[0].inputAmount,
+        //   recipientAddress: data.executePath.data.routes[0].receiverAddress
+        // });
         
-        const executePath = data.executePath.data.routes;
-        for(var i = 0; i < executePath.length; i++){
-          console.log(executePath[i]);
-          const protocol = executePath[i].protocol;
-          if(protocol.toLowerCase() === 'router'){
-            // Execute router transaction
-            const walletAddress = localStorage.getItem('wallets') || '';
-            const walletArray: NetworkData[] = JSON.parse(walletAddress);
+        // if (transfer.success) {
+        //   console.log('Transfer successful! Order ID:', transfer.orderId);
+        // } else {
+        //   console.error('Transfer failed:', transfer.error);
+        // }
+      }
 
-            const response = await fetch(`${process.env.TRANSACTION_BACKEND}/api/transactions/build/router`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                fromToken: executePath[i].fromToken,
-                toToken: executePath[i].toToken,
-                fromChainName: executePath[i].fromChainName,
-                toChainName: executePath[i].toChainName,
-                inputAmount: executePath[i].inputAmount
-              })
-            });
+      // if(data.isExecute){
+      //   // Executing the router and native blocks
+        
+      //   const executePath = data.executePath.data.routes;
+      //   for(var i = 0; i < executePath.length; i++){
+      //     console.log(executePath[i]);
+      //     const protocol = executePath[i].protocol;
+      //     if(protocol.toLowerCase() === 'router'){
+      //       // Execute router transaction
+      //       const walletAddress = localStorage.getItem('wallets') || '';
+      //       const walletArray: NetworkData[] = JSON.parse(walletAddress);
 
-            const result = await response.json();
-            console.log('Router transaction result:', result);
-          }else if(protocol.toLowerCase() === 'native'){
-            // Execute native transaction
-          }else if(protocol.toLowerCase() === 'uniswap'){
-            // Execute uniswap transaction
-          }else if(protocol.toLowerCase() === 'lifi'){
-            // Execute lifi transaction
-          }else{
-            continue
-          }
-        }
+      //       const response = await fetch(`${process.env.TRANSACTION_BACKEND}/api/transactions/build/router`, {
+      //         method: 'POST',
+      //         headers: {
+      //           'Content-Type': 'application/json',
+      //         },
+      //         body: JSON.stringify({
+      //           fromToken: executePath[i].fromToken,
+      //           toToken: executePath[i].toToken,
+      //           fromChainName: executePath[i].fromChainName,
+      //           toChainName: executePath[i].toChainName,
+      //           inputAmount: executePath[i].inputAmount
+      //         })
+      //       });
 
-        //After execution
-        const apiResult = 'Transactions completed successfully';
-        const aiResponse: StreamMessage = {
-          content: apiResult,
-          role: 'assistant',
-          timestamp: new Date().toISOString(),
-          isStreaming: false
-        };
+      //       const result = await response.json();
+      //       console.log('Router transaction result:', result);
+      //     }else if(protocol.toLowerCase() === 'native'){
+      //       // Execute native transaction
+      //     }else if(protocol.toLowerCase() === 'uniswap'){
+      //       // Execute uniswap transaction
+      //     }else if(protocol.toLowerCase() === 'lifi'){
+      //       // Execute lifi transaction
+      //     }else{
+      //       continue
+      //     }
+      //   }
+
+      //   //After execution
+      //   const apiResult = 'Transactions completed successfully';
+        // const aiResponse: StreamMessage = {
+        //   content: apiResult,
+        //   role: 'assistant',
+        //   timestamp: new Date().toISOString(),
+        //   isStreaming: false
+        // };
       
         
-        const chatWithResponse = {
-          ...updatedChat,
-          messages: [...updatedChat.messages, aiResponse]
-        };
+        // const chatWithResponse = {
+        //   ...updatedChat,
+        //   messages: [...updatedChat.messages, aiResponse]
+        // };
   
-        setChats(prev => ({ ...prev, [chatWithResponse.id]: chatWithResponse }));
-        setCurrentChat(chatWithResponse);
+        // setChats(prev => ({ ...prev, [chatWithResponse.id]: chatWithResponse }));
+        // setCurrentChat(chatWithResponse);
         
-      }
-      else{
+      // }
+      // else{
+
+
       // Streaming response
       const aiResponse: StreamMessage = {
         content: data.content,
@@ -248,12 +262,13 @@ export default function ChatPage() {
 
       setChats(prev => ({ ...prev, [chatWithResponse.id]: chatWithResponse }));
       setCurrentChat(chatWithResponse);
-    }
+    
     } catch (error) {
-      console.error('Error:', error);
+      // console.error('Error:', error);
       // Handle error by adding an error message to the chat
+      
       const errorMessage: StreamMessage = {
-        content: 'Sorry, there was an error processing your message. Please try again.',
+        content: 'Sorry,Your transaction could not go through due to insufficient balance.',
         role: 'assistant',
         timestamp: new Date().toISOString(),
         isStreaming: false
@@ -391,7 +406,7 @@ export default function ChatPage() {
       });
 
     } catch (error) {
-      console.error('Error:', error);
+      // console.error('Error:', error);
 
       setChats(prevChats => {
         const currentChat = prevChats[chatId];
@@ -399,7 +414,7 @@ export default function ChatPage() {
 
         const errorMessage: Message = {
           role: 'assistant',
-          content: 'Sorry, there was an error processing your message. Please try again.',
+          content: 'Sorry, We cannot process your transaction request due to insufficient balance.',
         };
 
         const updatedChat: Chat = {
@@ -418,7 +433,7 @@ export default function ChatPage() {
         
         const errorMessage: Message = {
           role: 'assistant',
-          content: 'Sorry, there was an error processing your message. Please try again.',
+          content: 'Sorry, We cannot process your transaction request due to insufficient balance',
         };
 
         return {

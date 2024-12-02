@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { executeOktoTransfer } from '../utils/oktoTransfer';
-import { refreshOktoToken } from '../utils/oktoAuth';
+import { initOktoTransferService, getOktoTransferService } from '../api/oktoTransferService';
 
 export default function ApiTestPage() {
   const [status, setStatus] = useState<string>('');
@@ -18,6 +17,7 @@ export default function ApiTestPage() {
     
     if (token) {
       setBearerToken(token);
+      initOktoTransferService(token);
     }
 
     if (walletsStr) {
@@ -41,9 +41,9 @@ export default function ApiTestPage() {
           {
             protocol: 'okto',
             network_name: 'POLYGON',
-            token_address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', // MATIC token
-            quantity: '1000000',
-            recipient_address: '0x0f5342B55ABCC0cC78bdB4868375bCA62B6c16eA'
+            token_address: '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0', // MATIC token
+            quantity: '0.1',
+            recipient_address: '0xCDAC489b062A5d057Bd15DdE758829eCF3A14e5B'
           }
         ]
       }
@@ -66,36 +66,24 @@ export default function ApiTestPage() {
     setError('');
 
     try {
-      // First refresh the token
-      setStatus('Refreshing authentication token...');
-      console.log('Starting token refresh with token:', bearerToken);
-      
-      try {
-        const refreshedToken = await refreshOktoToken(bearerToken);
-        console.log('Token refresh successful:', refreshedToken.substring(0, 10) + '...');
-        setBearerToken(refreshedToken);
-        setStatus('Token refreshed successfully.');
-      } catch (refreshError) {
-        console.error('Token refresh error:', refreshError);
-        setError(refreshError instanceof Error ? refreshError.message : 'Failed to refresh token');
-        return;
-      }
-
-      // Execute the transfer with refreshed token
       setStatus('Starting transaction test...');
-      const route = mockExecutionData.executePath.data.routes[0];
       
-      const transfer = await executeOktoTransfer({
-        networkName: route.network_name,
-        tokenAddress: route.token_address,
-        quantity: route.quantity,
-        recipientAddress: route.recipient_address
-      });
+      const oktoService = getOktoTransferService();
+      const executePath = mockExecutionData.executePath.data.routes;
 
-      if (transfer.success) {
-        setStatus(`Transfer completed successfully! Order ID: ${transfer.orderId}`);
-      } else {
-        throw new Error(transfer.error);
+      for(const route of executePath) {
+        if(route.protocol.toLowerCase() === 'okto') {
+          setStatus('Executing Okto transfer...');
+          
+          const result = await oktoService.transferToken({
+            networkName: route.network_name,
+            tokenAddress: route.token_address,
+            quantity: route.quantity,
+            recipientAddress: route.recipient_address
+          });
+
+          setStatus('Transfer completed successfully! Order ID: ' + result.orderId);
+        }
       }
     } catch (error) {
       console.error('Test failed:', error);

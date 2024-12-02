@@ -50,3 +50,5 @@ export function convertDBMessagesToChat(dbMessages: any[], chatId: string, threa
     messages: messages
   };
 }
+  };
+}
