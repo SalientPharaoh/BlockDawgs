@@ -1,8 +1,16 @@
 "use client";
 import BackgroundOrbs from './BackgroundOrbs';
 import { CursorEffect } from './ui/cursor-effect';
+import { useRouter } from 'next/navigation';
 
 export default function Hero() {
+
+  const router = useRouter();
+  function handleClick() {
+    console.log("Login modal initiated!");
+    router.push('/login');
+  }
+
   return (
     <main className="h-screen overflow-hidden bg-black relative flex flex-col justify-center">
       {/* Subtle gradient overlay */}
@@ -36,6 +44,7 @@ export default function Hero() {
           {/* Button Section */}
           <div className="flex items-center justify-center w-full max-w-3xl">
             <button
+              onClick={() => {handleClick()}}
               className="px-4 py-2 rounded-lg bg-white/20 border border-white/30 text-white text-sm font-medium transition-all duration-300 shadow-lg hover:shadow-white/20 hover:bg-gradient-to-br hover:from-purple-600 hover:via-violet-600 hover:to-purple-500"
             >
               LogIn to Chat

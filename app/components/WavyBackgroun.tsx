@@ -134,7 +134,7 @@ export const WavyBackground = ({
         </div>
         <div className="flex justify-center items-center mt-4">
         <Link href="https://x.com/" target="_blank" className="text-sm bg-black/40 px-4 py-2 rounded-xl hover:bg-black/70 font-semibold">
-        Check out @recollecta.ai
+        Check out @BlockMate
         </Link>
 
         </div>

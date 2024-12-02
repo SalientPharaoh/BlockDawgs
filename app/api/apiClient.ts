@@ -35,6 +35,19 @@ interface EmailVerifyResponse {
   message: string;
 }
 
+interface Wallet {
+  network_name: string;
+  address: string;
+  success: boolean;
+}
+
+interface WalletResponse {
+  status: string;
+  data: {
+    wallets: Wallet[];
+  };
+}
+
 class ApiClient {
   private apiKey: string;
 
@@ -42,11 +55,17 @@ class ApiClient {
     this.apiKey = apiKey;
   }
 
-  private getHeaders() {
-    return {
+  private getHeaders(authToken?: string) {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-Api-Key': this.apiKey,
     };
+
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    return headers;
   }
 
   async initiateEmailAuth(email: string): Promise<EmailAuthResponse> {
@@ -115,11 +134,37 @@ class ApiClient {
       const response = await axios.post(
         `${API_V2_BASE_URL}/authenticate`,
         { id_token: idToken },
-        { headers: this.getHeaders() }
+        { 
+          headers: this.getHeaders(),
+          // Add retry configuration
+          timeout: 10000, // 10 second timeout
+          validateStatus: (status) => {
+            return status < 500; // Resolve only if the status code is less than 500
+          }
+        }
       );
+
+      if (response.status === 429) {
+        throw new Error('Too many requests. Please try again later.');
+      }
+
+      if (response.status === 401) {
+        throw new Error('Unauthorized. Please check your credentials.');
+      }
+
+      if (response.status !== 200 || !response.data?.data?.auth_token) {
+        throw new Error(`Authentication failed: ${response.data?.message || 'Unknown error'}`);
+      }
+
       return response.data;
     } catch (error) {
-      throw new Error('Failed to authenticate with Google');
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 429) {
+          throw new Error('Too many requests. Please try again later.');
+        }
+        throw new Error(`Authentication failed: ${error.response?.data?.message || error.message}`);
+      }
+      throw error;
     }
   }
 
@@ -137,6 +182,67 @@ class ApiClient {
       );
     } catch (error) {
       throw new Error('Failed to logout');
+    }
+  }
+
+  async createWallet(authToken: string): Promise<WalletResponse> {
+    console.log('Creating wallet...');
+    try {
+      const response = await axios.post<WalletResponse>(
+        `${API_BASE_URL}/wallet`,
+        {},
+        { headers: this.getHeaders(authToken) }
+      );
+      console.log('Wallet created successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating wallet:', error);
+      throw error;
+    }
+  }
+
+  async getWallets(authToken: string): Promise<WalletResponse> {
+    console.log('Fetching wallets...');
+    try {
+      if (!authToken) {
+        throw new Error('No auth token provided');
+      }
+
+      const response = await axios.get<WalletResponse>(
+        `${API_BASE_URL}/wallet`,
+        { 
+          headers: this.getHeaders(authToken),
+          // Add retry configuration
+          timeout: 10000, // 10 second timeout
+          validateStatus: (status) => {
+            return status < 500; // Resolve only if the status code is less than 500
+          }
+        }
+      );
+
+      if (response.status === 429) {
+        throw new Error('Too many requests. Please try again later.');
+      }
+
+      if (response.status === 401) {
+        throw new Error('Unauthorized. Please check your authentication.');
+      }
+
+      if (response.status !== 200 || !response.data?.data?.wallets) {
+        throw new Error(`Failed to fetch wallets: ${response.data || 'Unknown error'}`);
+      }
+
+      console.log('Wallets fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching wallets:', error);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 429) {
+          throw new Error('Too many requests. Please try again later.');
+        }
+        throw new Error(`Failed to fetch wallets: ${error.response?.data || error.message}`);
+      }
+      throw error;
     }
   }
 }

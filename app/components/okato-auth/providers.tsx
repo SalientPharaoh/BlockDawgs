@@ -11,9 +11,11 @@ export default function Providers({
 }) {
   return (
     <SessionProvider session={session} refetchInterval={0}>
-      <AuthProvider>
-        <AppContextProvider>{children}</AppContextProvider>
-      </AuthProvider>
+      <AppContextProvider>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </AppContextProvider>
     </SessionProvider>
   );
 }
